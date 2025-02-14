@@ -9,6 +9,9 @@
     "author": "Nicolas JEUDY",
     "website": "https://github.com/alusage/juliennejavel-addons",
     "depends": ["account", "account_move_export", "account_payment_mode"],
-    "data": [],
+    "data": [
+        "views/account_payment_view.xml",
+        "views/account_move_view.xml",
+    ],
     "installable": True,
 }
