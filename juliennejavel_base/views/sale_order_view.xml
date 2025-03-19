@@ -1,0 +1,45 @@
+<odoo>
+    <data>
+        <!-- Inherit the form view of sale.order -->
+        <record id="view_order_form_inherited" model="ir.ui.view">
+            <field name="name">sale.order.form.inherited</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale_management.sale_order_form_quote"/>
+            <field name="arch" type="xml">
+                <field name="sale_order_template_id" position="after">
+                    <group>
+                        <field name="devis_tzee_id"/>
+                        <field name="client_tzee_id"/>
+                        <field name="order_state_id"/>
+                    </group>
+                </field>
+            </field>
+        </record>
+
+        <record id="view_sale_order_kanban_inherited" model="ir.ui.view">
+            <field name="name">sale.order.kanban.inherited</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_sale_order_kanban"/>
+            <field name="arch" type="xml">
+                    <xpath expr="//kanban" positiion="attributes">
+                        <attribute name="default_group_by">order_state_id</attribute>
+                    </xpath>
+                    <field name="state" position="after">
+                        <field name="order_state_id" options='{"group_by_tooltip": {"description": "Description"}}'/>
+                    </field>
+            </field>
+        </record>
+
+        <record id="view_sales_order_filter_inherited" model="ir.ui.view">
+            <field name="name">sale.order.filter.inherited</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_sales_order_filter"/>
+            <field name="arch" type="xml">
+            <xpath expr="//group" position="inside">
+                <filter string="Jalon" name="order_state_id" domain="[]" context="{'group_by': 'order_state_id'}"/>
+            </xpath>
+            </field>
+        </record>
+
+    </data>
+</odoo>

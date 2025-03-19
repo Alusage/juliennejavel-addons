@@ -1,11 +1,12 @@
-from odoo import api,models, fields
+from odoo import api, models, fields
+
 
 class AccountPaymentRegister(models.TransientModel):
-    _inherit = 'account.payment.register'
+    _inherit = "account.payment.register"
 
-    payment_mode_id = fields.Many2one('account.payment.mode', string='Payment Mode')
+    payment_mode_id = fields.Many2one("account.payment.mode", string="Payment Mode")
 
-    @api.onchange('payment_mode_id')
+    @api.onchange("payment_mode_id")
     def _onchange_payment_mode_id(self):
         if self.payment_mode_id:
             for method in self.available_payment_method_line_ids:
@@ -14,6 +15,8 @@ class AccountPaymentRegister(models.TransientModel):
             self.payment_method_line_id = payment_method_line_id
 
     def _create_payment_vals_from_wizard(self, batch_result):
-        payment_vals = super(AccountPaymentRegister, self)._create_payment_vals_from_wizard(batch_result)
-        payment_vals['payment_mode_id'] = self.payment_mode_id.id
+        payment_vals = super(
+            AccountPaymentRegister, self
+        )._create_payment_vals_from_wizard(batch_result)
+        payment_vals["payment_mode_id"] = self.payment_mode_id.id
         return payment_vals

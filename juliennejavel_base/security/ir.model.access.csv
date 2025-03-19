@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_sale_order_state_admin,sale.order.state admin,model_sale_order_state,sales_team.group_sale_manager,1,1,1,1
+access_sale_order_state_user,sale.order.state user,model_sale_order_state,base.group_user,1,0,0,0
+access_sale_order_import_public,sale.order.import public,model_sale_order_import,base.group_user,1,1,1,1

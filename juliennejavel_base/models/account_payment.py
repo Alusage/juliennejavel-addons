@@ -1,15 +1,16 @@
 from odoo import api, models, fields
 
+
 class AccountPayment(models.Model):
-    _inherit = 'account.payment'
+    _inherit = "account.payment"
 
     payment_mode_id = fields.Many2one(
-        'account.payment.mode',
-        string='Payment Mode',
-        help='The payment mode associated with this payment.'
+        "account.payment.mode",
+        string="Payment Mode",
+        help="The payment mode associated with this payment.",
     )
 
-    @api.onchange('payment_mode_id')
+    @api.onchange("payment_mode_id")
     def _onchange_payment_mode_id(self):
         if self.payment_mode_id:
             for method in self.available_payment_method_line_ids:

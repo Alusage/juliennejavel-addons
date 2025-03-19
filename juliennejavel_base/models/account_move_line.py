@@ -18,10 +18,11 @@ class AccountMoveLine(models.Model):
             else self.move_id
         )
 
-        if res["journal_code"] in ["CA", "CCOOP"]:
+        if res["journal_code"] in ["CA", "BFCC"]:
             if res["account_code"].startswith("512"):
                 res["account_code"] = self.journal_id.default_account_id.code
                 res["account_name"] = self.journal_id.default_account_id.name
+            res["item_label"] = "%s - %s" % (res['item_label'].split()[0],self.ref)
         else:
             if res["account_code"].startswith("411") or res["account_code"].startswith(
                 "7"
