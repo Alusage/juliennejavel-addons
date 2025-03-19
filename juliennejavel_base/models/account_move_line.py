@@ -18,11 +18,14 @@ class AccountMoveLine(models.Model):
             else self.move_id
         )
 
-        if res["journal_code"] in ["CA", "BFCC"]:
+        if res["journal_code"] in ["CA", "BFCC", "CCOOP"]:
             if res["account_code"].startswith("512"):
                 res["account_code"] = self.journal_id.default_account_id.code
                 res["account_name"] = self.journal_id.default_account_id.name
-            res["item_label"] = "%s - %s" % (res['item_label'].split()[0],self.ref)
+            if len(res['item_label'].split()) > 1 and res['item_label'].split()[0] == res['item_label'].split()[1]:
+                res["item_label"] = "%s - %s" % (res['item_label'].split()[0],self.ref)
+            else:
+                res["item_label"] = "%s - %s" % (res['item_label'],self.ref)
         else:
             if res["account_code"].startswith("411") or res["account_code"].startswith(
                 "7"
