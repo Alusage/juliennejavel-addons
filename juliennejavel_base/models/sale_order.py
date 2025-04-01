@@ -47,7 +47,7 @@ class SaleOrder(models.Model):
         if not order_state or not order_state.product_category_id:
             return
         for line in self.order_line:
-            if line.product_id.categ_id == order_state.product_category_id:
+            if line.order_id.state == 'sale' and line.product_id.categ_id == order_state.product_category_id:
                 line.qty_delivered = line.product_uom_qty
 
 
