@@ -2,7 +2,7 @@
 
 {
     "name": "Julienne Javel Base",
-    "version": "16.0.1.0.0",
+    "version": "16.0.2.0.0",
     "category": "Accounting",
     "license": "AGPL-3",
     "summary": "Julienne Javel Base",
@@ -25,6 +25,7 @@
         "views/sale_order_view.xml",
         "security/ir.model.access.csv",
         "wizards/sale_order_import_views.xml",
+        "wizards/sale_order_import_views_contact.xml",
     ],
     "installable": True,
 }

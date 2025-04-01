@@ -35,8 +35,8 @@ DELIMITER = {
 
 
 class SaleOrderImport(models.TransientModel):
-    _name = "sale.order.import"
-    _description = "Sale Order import"
+    _name = "sale.order.import.contact"
+    _description = "Sale Order Contact import"
     
     company_id = fields.Many2one(
         'res.company', string='Company',
@@ -78,21 +78,9 @@ class SaleOrderImport(models.TransientModel):
         fileobj.seek(0)  # We must start reading from the beginning !
         pivot = self.genericxlsx2pivot(fileobj)
         fileobj.close()
-        orders = self.create_order_from_pivot(pivot)
+        #orders = self.create_order_from_pivot(pivot)
         action = self.env["ir.actions.actions"]._for_xml_id(
             "sale.action_quotations_with_onboarding")
-        if len(orders) == 1:
-            action.update({
-                'view_mode': 'form,list',
-                'res_id': orders[0].id,
-                'view_id': False,
-                'views': False,
-                })
-        else:
-            action.update({
-                'view_mode': 'kanban,list,form',
-                'domain': [('id', 'in', orders.ids)],
-                })
         return action
 
     def clean_strip_pivot(self, pivot):
@@ -106,8 +94,6 @@ class SaleOrderImport(models.TransientModel):
 
     def genericxlsx2pivot(self, fileobj):
         wb = openpyxl.load_workbook(fileobj.name, read_only=True)
-        order_obj = self.env['sale.order']
-        so_template_obj = self.env['sale.order.template']
         partner_obj = self.env['res.partner']
         sh = wb.active
         
@@ -124,52 +110,26 @@ class SaleOrderImport(models.TransientModel):
                 # skip empty line
                 continue
             logger.info(row[1].value)
-            partner_id = partner_obj.search([('ref', '=', row[1].value)], limit=1)
+            partner_id = partner_obj.search([('ref', '=', row[0].value)], limit=1)
             if not partner_id:
                 partner_id = partner_obj.create({
-                    'name': row[3].value,
+                    'name': row[1].value,
                     'city': row[4].value,
-                    'ref': row[1].value,
+                    'street': row[2].value,
+                    'zip': row[3].value,
+                    'ref': row[0].value,
+                    'phone': row[7].value,
+                    'email': row[6].value,
                     'company_id': self.env.company.id,
                 })
             if partner_id:
                 partner_id.write({
                     'city': row[4].value,
+                    'street': row[2].value,
+                    'zip': row[3].value,
+                    'phone': row[7].value,
+                    'email': row[6].value,
                 })
-                order_id = order_obj.search([('partner_id', '=', partner_id.id)], limit=1)
-                
-                sale_template_id = so_template_obj.search([('name', 'ilike', 'MAR')], limit=1)
-                if row[11].value == 1:
-                    sale_template_id = so_template_obj.search([('name', 'ilike', 'OPAH')], limit=1)
-                if row[47].value == 6500:
-                    sale_template_id = so_template_obj.search([('name', 'ilike', 'Client TZEE')], limit=1)
-                    
-                if row[47].value == 850:
-                    copy_order = order_obj.search([('name', '=', 'S00004')], limit=1)
-                    if copy_order:
-                        new_id = copy_order.copy()
-                        new_id.write({
-                            'partner_id': partner_id.id,
-                        })
-                        sale_template_id = False
-
-                if sale_template_id:
-                    vals.update({
-                        'partner_id': partner_id.id,
-                        'sale_order_template_id': sale_template_id.id,
-                        'order_line': [],
-                    })
-                    vals = order_obj.play_onchanges(vals, ['partner_id'])
-                    for line in sale_template_id.sale_order_template_line_ids:
-                        vals['order_line'].append((0, 0, {
-                            'product_id': line.product_id.id,
-                            'product_uom_qty': line.product_uom_qty,
-                            'product_uom': line.product_uom_id.id,
-                            'name': line.name,
-                        }))
-                    logger.info(vals)
-                    res.append(vals)
-            
         return res
 
     
