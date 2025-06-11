@@ -1,0 +1,56 @@
+/* Bordures colorées pour les cartes kanban basées sur le modèle de devis */
+
+.oe_kanban_color_border_0 {
+    border-left: 4px solid #6c757d !important; /* Gris - défaut */
+}
+
+.oe_kanban_color_border_1 {
+    border-left: 4px solid #007bff !important; /* Bleu */
+}
+
+.oe_kanban_color_border_2 {
+    border-left: 4px solid #28a745 !important; /* Vert */
+}
+
+.oe_kanban_color_border_3 {
+    border-left: 4px solid #dc3545 !important; /* Rouge */
+}
+
+.oe_kanban_color_border_4 {
+    border-left: 4px solid #ffc107 !important; /* Jaune */
+}
+
+.oe_kanban_color_border_5 {
+    border-left: 4px solid #17a2b8 !important; /* Cyan */
+}
+
+.oe_kanban_color_border_6 {
+    border-left: 4px solid #6f42c1 !important; /* Violet */
+}
+
+.oe_kanban_color_border_7 {
+    border-left: 4px solid #e83e8c !important; /* Rose */
+}
+
+.oe_kanban_color_border_8 {
+    border-left: 4px solid #fd7e14 !important; /* Orange */
+}
+
+.oe_kanban_color_border_9 {
+    border-left: 4px solid #20c997 !important; /* Teal */
+}
+
+.oe_kanban_color_border_10 {
+    border-left: 4px solid #6610f2 !important; /* Indigo */
+}
+
+.oe_kanban_color_border_11 {
+    border-left: 4px solid #343a40 !important; /* Gris foncé */
+}
+
+/* Effet hover pour améliorer l'interactivité */
+.oe_kanban_card:hover[class*="oe_kanban_color_border_"] {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    transition: all 0.2s ease;
+}

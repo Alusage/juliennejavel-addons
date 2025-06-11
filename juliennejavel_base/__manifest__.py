@@ -18,14 +18,21 @@
         "onchange_helper",
     ],
     "data": [
+        #"data/bet_saleorder_template.csv",
         "views/account_payment_view.xml",
         "views/account_move_view.xml",
         "views/res_partner_view.xml",
         "views/sale_order_state_view.xml",
         "views/sale_order_view.xml",
+        "views/menu.xml",
         "security/ir.model.access.csv",
         "wizards/sale_order_import_views.xml",
         "wizards/sale_order_import_views_contact.xml",
     ],
+    "assets": {
+        "web.assets_backend": [
+            "juliennejavel_base/static/src/css/kanban_colors.css",
+        ],
+    },
     "installable": True,
 }
