@@ -34,5 +34,5 @@
         <field name="view_mode">tree,form</field>
     </record>
 
-    <menuitem id="menu_sale_order_state" name="Sale Order States" parent="sale.menu_sale_config" action="action_sale_order_state" sequence="10"/>
+    <menuitem id="menu_sale_order_state" name="Sale Order States" parent="sale.menu_sale_config" action="action_sale_order_state" sequence="10" active="False"/>
 </odoo>
