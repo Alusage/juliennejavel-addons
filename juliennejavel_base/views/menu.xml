@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <!-- Menu principal BET -->
+        <menuitem id="menu_bet_main" 
+                  name="BET" 
+                  sequence="50"/>
+
+        <!-- ===== SOUS-MENU SUIVI DES DOSSIERS ===== -->
+        <menuitem id="menu_bet_suivi_dossiers" 
+                  name="Suivi des dossiers" 
+                  parent="menu_bet_main" 
+                  sequence="10"/>
+
+        <!-- Action pour les devis avec vue kanban par défaut -->
+        <record id="action_bet_quotations" model="ir.actions.act_window">
+            <field name="name">Devis</field>
+            <field name="res_model">sale.order</field>
+            <field name="view_mode">kanban,tree,form,activity</field>
+            <field name="context">{
+                'default_state': 'draft',
+                'search_default_my_quotation': 1
+            }</field>
+            <field name="domain">[('state', 'in', ('draft', 'sent'))]</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Créer un nouveau devis
+                </p>
+                <p>
+                    Envoyer des devis à vos prospects. Il peut facilement être converti en commande.
+                </p>
+            </field>
+        </record>
+
+        <!-- Action pour les commandes -->
+        <record id="action_bet_orders" model="ir.actions.act_window">
+            <field name="name">Commandes</field>
+            <field name="res_model">sale.order</field>
+            <field name="view_mode">kanban,tree,form,activity</field>
+            <field name="context">{
+                'search_default_my_sale_order_filter': 1
+            }</field>
+            <field name="domain">[('state', 'in', ('sale', 'done'))]</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Créer une nouvelle commande
+                </p>
+                <p>
+                    Gérer les commandes confirmées et livrées.
+                </p>
+            </field>
+        </record>
+
+        <!-- Menus sous Suivi des dossiers -->
+        <menuitem id="menu_bet_quotations" 
+                  name="Devis" 
+                  parent="menu_bet_suivi_dossiers" 
+                  action="action_bet_quotations" 
+                  sequence="10"/>
+
+        <menuitem id="menu_bet_orders" 
+                  name="Commandes" 
+                  parent="menu_bet_suivi_dossiers" 
+                  action="action_bet_orders" 
+                  sequence="20"/>
+
+        <!-- ===== SOUS-MENU À FACTURER ===== -->
+        <menuitem id="menu_bet_facturer" 
+                  name="À facturer" 
+                  parent="menu_bet_main" 
+                  sequence="20"/>
+
+        <!-- Menu À facturer - utilise l'action existante -->
+        <menuitem id="menu_bet_to_invoice" 
+                  name="À facturer" 
+                  parent="menu_bet_facturer" 
+                  action="sale.action_orders_to_invoice" 
+                  sequence="10"/>
+
+        <!-- ===== SOUS-MENU CONTACTS ===== -->
+        <menuitem id="menu_bet_contacts" 
+                  name="Contacts" 
+                  parent="menu_bet_main" 
+                  sequence="30"/>
+
+        <!-- Menu Contacts - utilise l'action existante -->
+        <menuitem id="menu_bet_contacts_all" 
+                  name="Contacts" 
+                  parent="menu_bet_contacts" 
+                  action="contacts.action_contacts" 
+                  sequence="10"/>
+
+        <!-- ===== SOUS-MENU CONFIGURATION ===== -->
+        <menuitem id="menu_bet_configuration" 
+                  name="Configuration" 
+                  parent="menu_bet_main" 
+                  sequence="40"/>
+
+        <!-- Menu Jalons (Sale Order States) -->
+        <menuitem id="menu_bet_sale_order_states" 
+                  name="Jalons" 
+                  parent="menu_bet_configuration" 
+                  action="action_sale_order_state" 
+                  sequence="10"/>
+
+        <!-- Menu Import Commandes -->
+        <menuitem id="menu_bet_import_sale_orders" 
+                  name="Import Commandes" 
+                  parent="menu_bet_configuration" 
+                  action="sale_order_import_action" 
+                  sequence="20"/>
+
+        <!-- Menu Import Contacts -->
+        <menuitem id="menu_bet_import_contacts" 
+                  name="Import Contacts" 
+                  parent="menu_bet_configuration" 
+                  action="sale_order_import_contact_action" 
+                  sequence="30"/>
+
+        <!-- Menu Modèles de devis -->
+        <menuitem id="menu_bet_quotation_templates" 
+                  name="Modèles de devis" 
+                  parent="menu_bet_configuration" 
+                  action="sale_management.sale_order_template_action" 
+                  groups="sale_management.group_sale_order_template"
+                  sequence="40"/>
+
+    </data>
+</odoo>
