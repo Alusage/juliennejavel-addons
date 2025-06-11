@@ -83,6 +83,18 @@ class SaleOrder(models.Model):
             self.devis_tzee_id = False
             self.client_tzee_id = False
 
+    def write(self, vals):
+        """Surcharge write pour déclencher set_delivered_line_from_state lors du changement de jalon"""
+        result = super().write(vals)
+        
+        # Si le champ order_state_id a été modifié, déclencher la mise à jour des lignes livrées
+        if 'order_state_id' in vals:
+            for record in self:
+                if record.order_state_id:
+                    record.set_delivered_line_from_state(record.order_state_id)
+        
+        return result
+
     def set_delivered_line_from_state(self, order_state):
         if not order_state or not order_state.product_category_id:
             return
