@@ -6,13 +6,31 @@
             <field name="model">sale.order</field>
             <field name="inherit_id" ref="sale_management.sale_order_form_quote"/>
             <field name="arch" type="xml">
+                <!-- Ajouter le bouton "Créer devis TZEE" dans l'en-tête -->
+                <xpath expr="//header" position="inside">
+                    <button name="create_tzee_order" 
+                            type="object" 
+                            string="Créer devis TZEE" 
+                            class="oe_highlight"
+                            groups="sale_management.group_sale_order_template"
+                            attrs="{'invisible': ['|', ('sale_order_template_id', '!=', 2), ('devis_tzee_id', '!=', False)]}"/>
+                    <button name="action_view_tzee_order" 
+                            type="object" 
+                            string="Voir devis TZEE" 
+                            class="btn-secondary"
+                            groups="sale_management.group_sale_order_template"
+                            attrs="{'invisible': ['|', ('sale_order_template_id', '!=', 2), ('devis_tzee_id', '=', False)]}"/>
+                </xpath>
+                
                 <field name="sale_order_template_id" position="after">
-                    <group>
                         <field name="fiscal_revenue"/>
-                        <field name="devis_tzee_id"/>
-                        <field name="client_tzee_id"/>
+                        <field name="devis_tzee_id" 
+                               groups="sale_management.group_sale_order_template"
+                               attrs="{'invisible': [('sale_order_template_id', '!=', 2)]}"/>
+                        <field name="client_tzee_id" 
+                               groups="sale_management.group_sale_order_template"
+                               attrs="{'invisible': [('sale_order_template_id', '!=', 3)]}"/>
                         <field name="order_state_id"/>
-                    </group>
                 </field>
                 <notebook position="inside">
                     <page string="Informations Dossier">
@@ -34,12 +52,22 @@
             <field name="model">sale.order</field>
             <field name="inherit_id" ref="sale.view_sale_order_kanban"/>
             <field name="arch" type="xml">
-                    <xpath expr="//kanban" positiion="attributes">
+                    <xpath expr="//kanban" position="attributes">
                         <attribute name="default_group_by">order_state_id</attribute>
                     </xpath>
                     <field name="state" position="after">
                         <field name="order_state_id" options='{"group_by_tooltip": {"description": "Description"}}'/>
+                        <field name="color"/>
                     </field>
+                    <!-- Ajouter une classe CSS dynamique pour la couleur -->
+                    <xpath expr="//div[@t-attf-class='oe_kanban_card oe_kanban_global_click']" position="attributes">
+                        <attribute name="t-attf-class">oe_kanban_card oe_kanban_global_click oe_kanban_color_border_{{record.color.raw_value or 0}}</attribute>
+                    </xpath>
+                    <xpath expr="//div[@class='o_kanban_record_bottom']" position="before">
+                        <div class="o_kanban_record_body">
+                            <strong>Modèle: </strong><field name="sale_order_template_id"/>
+                        </div>
+                    </xpath>
             </field>
         </record>
 
