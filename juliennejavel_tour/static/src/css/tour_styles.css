@@ -1,0 +1,77 @@
+/* Styles pour la visite guidée BET */
+
+.o_bet_tour_helper {
+    margin: 10px 15px;
+    z-index: 1040;
+}
+
+.o_bet_tour_helper .alert {
+    border-left: 4px solid #0066cc;
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+}
+
+.o_bet_tour_helper .btn {
+    white-space: nowrap;
+}
+
+/* Styles pour les étapes du tour */
+.o_tour_pointer {
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.o_tour_pointer .popover-header {
+    background-color: #0066cc;
+    color: white;
+    border-bottom: none;
+    font-weight: 600;
+}
+
+.o_tour_pointer .popover-body {
+    padding: 15px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* Animation pour attirer l'attention sur les éléments */
+@keyframes tour-highlight {
+    0% { box-shadow: 0 0 0 0 rgba(0, 102, 204, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(0, 102, 204, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(0, 102, 204, 0); }
+}
+
+.o_tour_running .o_tour_step_active {
+    animation: tour-highlight 2s infinite;
+    position: relative;
+    z-index: 1041;
+}
+
+/* Style pour le message de félicitation */
+.o_tour_rainbow {
+    font-size: 16px;
+    font-weight: 500;
+    text-align: center;
+    padding: 20px;
+}
+
+/* Responsive design pour mobile */
+@media (max-width: 768px) {
+    .o_bet_tour_helper {
+        margin: 5px 10px;
+    }
+    
+    .o_bet_tour_helper .alert {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .o_bet_tour_helper .btn {
+        margin-top: 10px;
+        width: 100%;
+    }
+    
+    .o_tour_pointer {
+        max-width: 90vw;
+    }
+}

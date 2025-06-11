@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <!-- Menu pour la visite guidée dans Configuration BET -->
+        <menuitem id="menu_bet_tour_launcher" 
+                  name="🎯 Visite guidée" 
+                  parent="juliennejavel_base.menu_bet_configuration" 
+                  action="action_tour_launcher" 
+                  sequence="1"/>
+
+        <!-- Raccourci dans le menu principal BET pour démarrer rapidement -->
+        <menuitem id="menu_bet_quick_tour" 
+                  name="🚀 Démo rapide" 
+                  parent="juliennejavel_base.menu_bet_main" 
+                  action="action_start_advanced_tour" 
+                  sequence="5"/>
+
+        <!-- Menu pour le tour simple dans Configuration -->
+        <menuitem id="menu_bet_simple_tour" 
+                  name="📖 Présentation simple" 
+                  parent="juliennejavel_base.menu_bet_configuration" 
+                  action="action_start_simple_tour" 
+                  sequence="2"/>
+
+    </data>
+</odoo>
