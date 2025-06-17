@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Groupe BET / Utilisateurs -->
+        <record id="group_bet_user" model="res.groups">
+            <field name="name">BET / Utilisateurs</field>
+            <field name="category_id" ref="base.module_category_sales_management"/>
+            <field name="implied_ids" eval="[(4, ref('sales_team.group_sale_salesman_all_leads'))]"/>
+            <field name="comment">Utilisateurs de l'application BET avec accès aux fonctionnalités de base</field>
+        </record>
+
+        <!-- Groupe BET / Administrateur -->
+        <record id="group_bet_manager" model="res.groups">
+            <field name="name">BET / Administrateur</field>
+            <field name="category_id" ref="base.module_category_sales_management"/>
+            <field name="implied_ids" eval="[(4, ref('juliennejavel_base.group_bet_user'))]"/>
+            <field name="comment">Administrateurs de l'application BET avec accès complet</field>
+        </record>
+    </data>
+</odoo>

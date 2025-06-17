@@ -4,7 +4,8 @@
         <!-- Menu principal BET -->
         <menuitem id="menu_bet_main" 
                   name="BET" 
-                  sequence="50"/>
+                  sequence="50"
+                  groups="juliennejavel_base.group_bet_user"/>
 
         <!-- ===== SOUS-MENU SUIVI DES DOSSIERS ===== -->
         <menuitem id="menu_bet_suivi_dossiers" 
