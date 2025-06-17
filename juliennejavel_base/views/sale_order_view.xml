@@ -20,13 +20,24 @@
                             class="btn-secondary"
                             groups="sale_management.group_sale_order_template"
                             attrs="{'invisible': ['|', ('sale_order_template_id', '!=', 2), ('devis_tzee_id', '=', False)]}"/>
+                    <button name="toggle_active" 
+                            type="object" 
+                            string="Archiver" 
+                            class="btn-secondary"
+                            attrs="{'invisible': [('active', '=', False)]}"/>
+                    <button name="toggle_active" 
+                            type="object" 
+                            string="Désarchiver" 
+                            class="btn-secondary"
+                            attrs="{'invisible': [('active', '=', True)]}"/>
                 </xpath>
                 
                 <field name="sale_order_template_id" position="after">
+                        <field name="active" invisible="1"/>
                         <field name="fiscal_revenue"/>
                         <field name="devis_tzee_id" 
                                groups="sale_management.group_sale_order_template"
-                               attrs="{'invisible': [('sale_order_template_id', '!=', 2)]}"/>
+                               attrs="{'invisible': ['|', ('sale_order_template_id', '!=', 2), ('devis_tzee_id', '=', False)]}"/>
                         <field name="client_tzee_id" 
                                groups="sale_management.group_sale_order_template"
                                attrs="{'invisible': [('sale_order_template_id', '!=', 3)]}"/>
@@ -82,9 +93,15 @@
             <field name="model">sale.order</field>
             <field name="inherit_id" ref="sale.view_sales_order_filter"/>
             <field name="arch" type="xml">
-            <xpath expr="//group" position="inside">
-                <filter string="Jalon" name="order_state_id" domain="[]" context="{'group_by': 'order_state_id'}"/>
-            </xpath>
+                <xpath expr="//group" position="inside">
+                    <filter string="Jalon" name="order_state_id" domain="[]" context="{'group_by': 'order_state_id'}"/>
+                </xpath>
+                <xpath expr="//filter[@name='activities_overdue']" position="after">
+                    <separator/>
+                    <filter string="Projets TZEE" name="tzee_projects" domain="[('sale_order_template_id', 'in', [2, 3])]"/>
+                    <separator/>
+                    <filter string="Archivés" name="archived" domain="[('active', '=', False)]"/>
+                </xpath>
             </field>
         </record>
 
