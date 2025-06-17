@@ -264,3 +264,43 @@ class SaleOrderJalon(models.Model):
     product_category_id = fields.Many2one(
         "product.category", string="Categorie de produit"
     )
+
+
+class SaleOrderLine(models.Model):
+    _inherit = "sale.order.line"
+
+    force_invoicing = fields.Boolean(
+        string="Forcer la facturation",
+        help="Cocher cette case pour forcer qty_invoiced et qty_delivered à la quantité commandée (utile pour l'import d'historique)"
+    )
+
+    @api.depends('invoice_lines.move_id.state', 'invoice_lines.quantity', 'force_invoicing')
+    def _compute_qty_invoiced(self):
+        """Override pour gérer le force_invoicing"""
+        # Appel de la méthode parent pour le calcul normal
+        super()._compute_qty_invoiced()
+        
+        # Ensuite, forcer à la quantité commandée si force_invoicing est coché
+        for line in self:
+            if line.force_invoicing:
+                line.qty_invoiced = line.product_uom_qty
+
+    @api.depends(
+        'qty_delivered_method',
+        'analytic_line_ids.so_line',
+        'analytic_line_ids.unit_amount',
+        'analytic_line_ids.product_uom_id',
+        'force_invoicing')
+    def _compute_qty_delivered(self):
+        """Override pour gérer le force_invoicing"""
+        # Filtrer les lignes avec force_invoicing pour les traiter séparément
+        forced_lines = self.filtered('force_invoicing')
+        remaining_lines = self - forced_lines
+        
+        # Appel de la méthode parent pour le calcul normal sur les lignes restantes
+        if remaining_lines:
+            super(SaleOrderLine, remaining_lines)._compute_qty_delivered()
+        
+        # Forcer à la quantité commandée pour les lignes avec force_invoicing
+        for line in forced_lines:
+            line.qty_delivered = line.product_uom_qty

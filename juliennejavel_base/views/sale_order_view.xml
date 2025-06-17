@@ -82,5 +82,29 @@
             </field>
         </record>
 
+        <!-- Inherit the tree view of sale.order.line to add force_invoicing field -->
+        <record id="view_order_line_tree_inherited" model="ir.ui.view">
+            <field name="name">sale.order.line.tree.inherited</field>
+            <field name="model">sale.order.line</field>
+            <field name="inherit_id" ref="sale.view_order_line_tree"/>
+            <field name="arch" type="xml">
+                <field name="qty_invoiced" position="after">
+                    <field name="force_invoicing" optional="hide"/>
+                </field>
+            </field>
+        </record>
+
+        <!-- Inherit the form view of sale.order to add force_invoicing in order_line -->
+        <record id="view_order_form_order_line_inherited" model="ir.ui.view">
+            <field name="name">sale.order.form.order.line.inherited</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='order_line']/tree//field[@name='qty_invoiced']" position="after">
+                    <field name="force_invoicing" optional="hide"/>
+                </xpath>
+            </field>
+        </record>
+
     </data>
 </odoo>
