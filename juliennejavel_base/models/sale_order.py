@@ -199,14 +199,27 @@ class SaleOrder(models.Model):
             'order_line': [],  # Initialiser la liste des lignes
         }
         
+        # Ajouter une ligne de note en première position si client_tzee_id est défini
+        if self.partner_id:
+            client_name = self.partner_id.name
+            note_line = (0, 0, {
+                'display_type': 'line_note',
+                'name': f"Pour le dossier de {client_name}",
+                'sequence': 1,  # Première ligne
+            })
+            tzee_order_vals['order_line'].append(note_line)
+        
         # Ajouter explicitement les lignes du modèle TZEE (même logique que dans sale_order_import.py)
+        sequence = 10  # Commencer à 10 pour les lignes normales
         for line in tzee_template.sale_order_template_line_ids:
             tzee_order_vals['order_line'].append((0, 0, {
                 'product_id': line.product_id.id,
                 'product_uom_qty': line.product_uom_qty,
                 'product_uom': line.product_uom_id.id,
                 'name': line.name,
+                'sequence': sequence,
             }))
+            sequence += 1
         
         _logger.info("Creating TZEE order with values: %s", tzee_order_vals)
         
