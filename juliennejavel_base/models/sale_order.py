@@ -26,6 +26,7 @@ class SaleOrder(models.Model):
         group_expand="_read_group_order_state_ids",
         index=True,
         tracking=True,
+        default=lambda self: self.env['sale.order.state'].browse(1)
     )
     fiscal_revenue = fields.Selection(
         selection=[("TM", "Très Modeste"), ("RI", "Revenu Intermediare"), ("M", "Modeest"), ("RS", "Revenu Supérieur")],
