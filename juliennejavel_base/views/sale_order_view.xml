@@ -32,18 +32,24 @@
                                attrs="{'invisible': [('sale_order_template_id', '!=', 3)]}"/>
                         <field name="order_state_id"/>
                 </field>
-                <notebook position="inside">
-                    <page string="Informations Dossier">
-                        <group>
+                
+                <!-- Section Informations Dossier -->
+                <xpath expr="//notebook" position="before">
+                    <separator string="Informations Dossier" colspan="4"/>
+                    <group colspan="4" col="4">
+                        <group colspan="2" col="2">
                             <field name="energy_gain"/>
                             <field name="total_work_cost"/>
                             <field name="total_subsidies"/>
+                        </group>
+                        <group colspan="2" col="2">
                             <field name="financing_rate"/>
                             <field name="delegataire_id"/>
                             <field name="procivis_file"/>
                         </group>
-                    </page>
-                </notebook>
+                    </group>
+                </xpath>
+
             </field>
         </record>
 
