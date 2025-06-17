@@ -166,6 +166,8 @@ class SaleOrderImport(models.TransientModel):
                             'product_uom_qty': line.product_uom_qty,
                             'product_uom': line.product_uom_id.id,
                             'name': line.name,
+                            'display_type': line.display_type,
++                           'sequence': line.sequence,
                         }))
                     logger.info(vals)
                     res.append(vals)
