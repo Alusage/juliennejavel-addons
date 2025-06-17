@@ -40,6 +40,13 @@ class SaleOrder(models.Model):
     delegataire_id = fields.Many2one("res.partner", string="Délégataire")
     procivis_file = fields.Char(string="Dossier Procivis (URL)")
     
+    # Forcer le mode de paiement à 30 jours par défaut
+    payment_term_id = fields.Many2one(
+        "account.payment.term",
+        string="Conditions de paiement",
+        default=lambda self: self.env['account.payment.term'].browse(4)
+    )
+    
     # Champ couleur calculé basé sur le modèle de devis
     color = fields.Integer(string="Couleur", compute="_compute_color", store=False)
 
