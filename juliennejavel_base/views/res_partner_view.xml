@@ -6,7 +6,9 @@
         <field name="inherit_id" ref="base.view_partner_form"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='vat']" position="after">
+                <field name="ref"/>
                 <field name="fiscal_revenue"/>
+                <field name="company_ids" widget="many2many_tags"/>
             </xpath>
         </field>
     </record>
