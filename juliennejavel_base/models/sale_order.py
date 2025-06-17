@@ -68,21 +68,6 @@ class SaleOrder(models.Model):
         if self.partner_id:
             self.fiscal_revenue = self.partner_id.fiscal_revenue
 
-    @api.onchange("sale_order_template_id")
-    def _onchange_sale_order_template_id(self):
-        """Nettoie les champs TZEE quand le modèle change"""
-        if self.sale_order_template_id:
-            # Si ce n'est pas le modèle ID=2, vider le champ devis_tzee_id
-            if self.sale_order_template_id.id != 2:
-                self.devis_tzee_id = False
-            # Si ce n'est pas le modèle ID=3, vider le champ client_tzee_id  
-            if self.sale_order_template_id.id != 3:
-                self.client_tzee_id = False
-        else:
-            # Si aucun modèle, vider les deux champs
-            self.devis_tzee_id = False
-            self.client_tzee_id = False
-
     def write(self, vals):
         """Surcharge write pour déclencher set_delivered_line_from_state lors du changement de jalon"""
         result = super().write(vals)
@@ -91,7 +76,14 @@ class SaleOrder(models.Model):
         if 'order_state_id' in vals:
             for record in self:
                 if record.order_state_id:
+                    # Mémoriser l'état des lignes avant modification
+                    lines_before = {line.id: line.qty_delivered for line in record.order_line}
+                    
+                    # Déclencher la mise à jour des lignes livrées
                     record.set_delivered_line_from_state(record.order_state_id)
+                    
+                    # Vérifier si des lignes ont été modifiées et générer une facture si nécessaire
+                    record._auto_create_invoice_if_delivered(lines_before)
         
         return result
 
@@ -101,6 +93,65 @@ class SaleOrder(models.Model):
         for line in self.order_line:
             if line.order_id.state == 'sale' and line.order_id.order_state_id == order_state and line.product_id.categ_id == order_state.product_category_id:
                 line.qty_delivered = line.product_uom_qty
+
+    def _auto_create_invoice_if_delivered(self, lines_before):
+        """
+        Génère automatiquement une facture en brouillon si des lignes ont été marquées comme livrées
+        lors du changement d'étape - utilise les méthodes standard d'Odoo
+        """
+        self.ensure_one()
+        
+        # Vérifier que la commande est confirmée
+        if self.state != 'sale':
+            return
+        
+        # Vérifier si des lignes ont été modifiées (passées de 0 à une valeur > 0 en qty_delivered)
+        lines_modified = []
+        for line in self.order_line:
+            old_qty = lines_before.get(line.id, 0)
+            new_qty = line.qty_delivered
+            
+            # Si la ligne était non livrée (0) et est maintenant livrée (> 0)
+            if old_qty == 0 and new_qty > 0:
+                lines_modified.append(line)
+        
+        # Si aucune ligne n'a été modifiée, ne rien faire
+        if not lines_modified:
+            return
+        
+        # Vérifier s'il y a des lignes livrées non facturées
+        lines_to_invoice = self.order_line.filtered(lambda l: l.qty_delivered > l.qty_invoiced)
+        
+        if not lines_to_invoice:
+            return
+        
+        try:
+            # Utiliser la méthode standard d'Odoo pour créer les factures
+            # Cela réutilise toute la logique existante de facturation
+            invoice = self._create_invoices()
+            
+            if invoice:
+                # Préparer la liste des lignes concernées avec formatage HTML
+                lines_list = "<br/>".join([f"• {line.product_id.name}" for line in lines_modified])
+                
+                # Ajouter un message dans le chatter pour traçabilité avec lien vers la facture
+                self.message_post(
+                    body=f"✅ <strong>Facture générée automatiquement</strong><br/>"
+                         f"📄 Facture: <a href='/web#id={invoice.id}&view_type=form&model=account.move' style='font-weight:bold;'>Voir la facture</a><br/>"
+                         f"🎯 Suite au changement d'étape: <strong>{self.order_state_id.name}</strong><br/>"
+                         f"📦 <strong>Lignes concernées:</strong><br/>{lines_list}",
+                    message_type='comment'
+                )
+                
+                return invoice
+                
+        except Exception as e:
+            _logger.error(
+                "Erreur lors de la création automatique de facture pour la commande %s: %s",
+                self.name, str(e)
+            )
+            # Ne pas bloquer le processus en cas d'erreur, juste logger
+            return False
 
     def create_tzee_order(self):
         """Créer un devis TZEE lié au devis client actuel"""
