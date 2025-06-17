@@ -11,5 +11,17 @@
                 </field>
             </field>
         </record>
+
+        <!-- Inherit search view to add filter for unsent invoices -->
+        <record id="view_account_invoice_filter_inherit" model="ir.ui.view">
+            <field name="name">account.move.search.inherit</field>
+            <field name="model">account.move</field>
+            <field name="inherit_id" ref="account.view_account_invoice_filter"/>
+            <field name="arch" type="xml">
+                <filter name="late" position="after">
+                    <filter string="Non envoyées" name="not_sent" domain="[('is_move_sent', '=', False), ('move_type', 'in', ['out_invoice', 'out_refund'])]"/>
+                </filter>
+            </field>
+        </record>
     </data>
 </odoo>
