@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="mail_tracking_export_wizard_form" model="ir.ui.view">
+        <field name="name">mail.tracking.export.wizard.form</field>
+        <field name="model">mail.tracking.export.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Export Tracking Changes">
+                <group>
+                    <field name="model_id"/>
+                    <field name="model_name" invisible="1"/>
+                    <field
+                        name="field_ids"
+                        widget="many2many_tags"
+                        domain="[('model_id', '=', model_id)]"
+                        attrs="{'invisible': [('model_id', '=', False)]}"
+                    />
+                    <field
+                        name="tracked_field_ids"
+                        widget="many2many_tags"
+                        domain="[('model_id', '=', model_id), ('tracking', '!=', False)]"
+                        attrs="{'invisible': [('model_id', '=', False)]}"
+                    />
+                    <field name="date_from"/>
+                    <field name="date_to"/>
+                </group>
+                <group attrs="{'invisible': [('data', '=', False)]}">
+                    <field name="data" filename="filename"/>
+                    <field name="filename" invisible="1"/>
+                </group>
+                <footer>
+                    <button
+                        name="action_export"
+                        string="Export"
+                        type="object"
+                        class="btn-primary"
+                        attrs="{'invisible': [('data', '!=', False)]}"
+                    />
+                    <button string="Close" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_mail_tracking_export_wizard" model="ir.actions.act_window">
+        <field name="name">Export Tracking Changes</field>
+        <field name="res_model">mail.tracking.export.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem
+        id="menu_mail_tracking_export"
+        name="Export Tracking Changes"
+        parent="mail.menu_mail_message"
+        action="action_mail_tracking_export_wizard"
+        sequence="90"
+    />
+
+</odoo>
