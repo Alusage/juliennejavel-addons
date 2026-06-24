@@ -4,6 +4,13 @@ from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
 
+# Identifiants des modèles de devis (sale.order.template) du workflow TZEE
+TEMPLATE_MAR_CLIENT_TZEE = 2  # "Projet MAR (Client TZEE)" : devis facturé au client final
+TEMPLATE_TZEE = 3  # "Projet TZEE (ZEE)" : devis facturé à la structure publique
+
+# Jalon final : déclenche la facturation client (MAR) et le désarchivage du devis MAR
+JALON_TRAVAUX_TERMINES = "Travaux terminés"
+
 
 class SaleOrder(models.Model):
     _inherit = "sale.order"
@@ -13,14 +20,14 @@ class SaleOrder(models.Model):
 
     devis_tzee_id = fields.Many2one(
         "sale.order", 
-        string="Devis TZEE", 
-        domain="[('sale_order_template_id', '=', 3)]",
+        string="Devis TZEE",
+        domain=f"[('sale_order_template_id', '=', {TEMPLATE_TZEE})]",
         help="Devis associé utilisant le modèle TZEE (ID=3)"
     )
     client_tzee_id = fields.Many2one(
         "sale.order", 
-        string="Client TZEE", 
-        domain="[('sale_order_template_id', '=', 2)]",
+        string="Client TZEE",
+        domain=f"[('sale_order_template_id', '=', {TEMPLATE_MAR_CLIENT_TZEE})]",
         help="Client associé utilisant le modèle Client TZEE (ID=2)"
     )
     order_state_id = fields.Many2one(
@@ -113,8 +120,8 @@ class SaleOrder(models.Model):
         self.ensure_one()
         
         # Si c'est un devis TZEE principal (modèle 3) qui a un client_tzee_id
-        if (self.sale_order_template_id and 
-            self.sale_order_template_id.id == 3 and 
+        if (self.sale_order_template_id and
+            self.sale_order_template_id.id == TEMPLATE_TZEE and
             self.client_tzee_id):
             
             # Mettre à jour le jalon du devis client archivé
@@ -132,11 +139,11 @@ class SaleOrder(models.Model):
         self.ensure_one()
         
         # Vérifier si c'est un devis TZEE principal avec un jalon "Travaux terminés"
-        if (self.sale_order_template_id and 
-            self.sale_order_template_id.id == 3 and 
+        if (self.sale_order_template_id and
+            self.sale_order_template_id.id == TEMPLATE_TZEE and
             self.client_tzee_id and
             self.order_state_id and
-            self.order_state_id.name == "Travaux terminés"):
+            self.order_state_id.name == JALON_TRAVAUX_TERMINES):
             
             # Désarchiver le devis client
             self.client_tzee_id.active = True
@@ -156,8 +163,25 @@ class SaleOrder(models.Model):
             )
 
     def set_delivered_line_from_state(self, order_state):
-        if not order_state or not order_state.product_category_id:
+        if not order_state:
             return
+
+        # Le devis MAR "fantôme" (modèle "Projet MAR (Client TZEE)", id 2) suit le devis
+        # TZEE de jalon en jalon, mais il ne facture que le client final, et uniquement à
+        # la dernière étape "Travaux terminés". À ce jalon, on facture TOUTES ses lignes
+        # (quelle que soit leur catégorie) ; aux étapes intermédiaires, on ne marque rien
+        # (ces étapes sont facturées à la structure publique via le devis TZEE).
+        if self.sale_order_template_id.id == TEMPLATE_MAR_CLIENT_TZEE:
+            if order_state.name != JALON_TRAVAUX_TERMINES:
+                return
+            for line in self.order_line:
+                if line.order_id.state == 'sale':
+                    line.qty_delivered = line.product_uom_qty
+            return
+
+        if not order_state.product_category_id:
+            return
+
         for line in self.order_line:
             if line.order_id.state == 'sale' and line.order_id.order_state_id == order_state and line.product_id.categ_id == order_state.product_category_id:
                 line.qty_delivered = line.product_uom_qty
@@ -168,11 +192,11 @@ class SaleOrder(models.Model):
         lors du changement d'étape - utilise les méthodes standard d'Odoo
         """
         self.ensure_one()
-        
+
         # Vérifier que la commande est confirmée
         if self.state != 'sale':
             return
-        
+
         # Vérifier si des lignes ont été modifiées (passées de 0 à une valeur > 0 en qty_delivered)
         lines_modified = []
         for line in self.order_line:
@@ -226,7 +250,7 @@ class SaleOrder(models.Model):
         self.ensure_one()
         
         # Vérifier les conditions
-        if not self.sale_order_template_id or self.sale_order_template_id.id != 2:
+        if not self.sale_order_template_id or self.sale_order_template_id.id != TEMPLATE_MAR_CLIENT_TZEE:
             raise UserError(_("Cette action n'est disponible que pour les devis avec le modèle Client TZEE (ID=2)"))
         
         if self.devis_tzee_id:
@@ -236,14 +260,14 @@ class SaleOrder(models.Model):
             raise UserError(_("Veuillez d'abord sélectionner un client avant de créer un devis TZEE"))
         
         # Récupérer le modèle TZEE (ID=3)
-        tzee_template = self.env['sale.order.template'].browse(3)
+        tzee_template = self.env['sale.order.template'].browse(TEMPLATE_TZEE)
         if not tzee_template.exists():
             raise UserError(_("Le modèle de devis TZEE (ID=3) n'existe pas. Veuillez contacter votre administrateur."))
 
         # Créer le nouveau devis TZEE avec les lignes du modèle
         tzee_order_vals = {
             'partner_id': self.partner_id.id,
-            'sale_order_template_id': 3,
+            'sale_order_template_id': TEMPLATE_TZEE,
             'client_tzee_id': self.id,  # Lien vers le devis client original
             'state': 'draft',
             'origin': f"Généré depuis {self.name}",
