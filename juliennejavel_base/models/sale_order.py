@@ -163,27 +163,40 @@ class SaleOrder(models.Model):
             )
 
     def set_delivered_line_from_state(self, order_state):
-        if not order_state:
+        """Marque les lignes livrées (qty_delivered) selon le jalon atteint.
+
+        Deux régimes :
+        - devis MAR « fantôme » (client final) : on ne facture qu'au jalon final
+          « Travaux terminés », et on y facture TOUTES ses lignes ;
+        - autres devis (TZEE, Projet MAR classique, etc) : à chaque jalon, on livre
+          les lignes dont la catégorie correspond à celle du jalon.
+        """
+        self.ensure_one()
+        if not order_state or self.state != 'sale':
             return
 
-        # Le devis MAR "fantôme" (modèle "Projet MAR (Client TZEE)", id 2) suit le devis
-        # TZEE de jalon en jalon, mais il ne facture que le client final, et uniquement à
-        # la dernière étape "Travaux terminés". À ce jalon, on facture TOUTES ses lignes
-        # (quelle que soit leur catégorie) ; aux étapes intermédiaires, on ne marque rien
-        # (ces étapes sont facturées à la structure publique via le devis TZEE).
         if self.sale_order_template_id.id == TEMPLATE_MAR_CLIENT_TZEE:
-            if order_state.name != JALON_TRAVAUX_TERMINES:
-                return
-            for line in self.order_line:
-                if line.order_id.state == 'sale':
-                    line.qty_delivered = line.product_uom_qty
-            return
+            self._deliver_mar_ghost_lines(order_state)
+        else:
+            self._deliver_lines_for_jalon(order_state)
 
-        if not order_state.product_category_id:
+    def _deliver_mar_ghost_lines(self, order_state):
+        """Devis MAR « fantôme » : facture le client final, mais uniquement au
+        jalon « Travaux terminés », et y facture TOUTES ses lignes (quelle que
+        soit leur catégorie). Aux étapes intermédiaires, on ne marque rien (elles
+        sont facturées à la structure publique via le devis TZEE)."""
+        if order_state.name != JALON_TRAVAUX_TERMINES:
             return
-
         for line in self.order_line:
-            if line.order_id.state == 'sale' and line.order_id.order_state_id == order_state and line.product_id.categ_id == order_state.product_category_id:
+            line.qty_delivered = line.product_uom_qty
+
+    def _deliver_lines_for_jalon(self, order_state):
+        """Flux standard : on livre les lignes dont la catégorie correspond à
+        celle du jalon courant."""
+        if not order_state.product_category_id or self.order_state_id != order_state:
+            return
+        for line in self.order_line:
+            if line.product_id.categ_id == order_state.product_category_id:
                 line.qty_delivered = line.product_uom_qty
 
     def _auto_create_invoice_if_delivered(self, lines_before):
