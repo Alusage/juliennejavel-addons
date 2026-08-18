@@ -47,16 +47,24 @@
                 <!-- Section Informations Dossier -->
                 <xpath expr="//notebook" position="before">
                     <separator string="Informations Dossier" colspan="4"/>
-                    <group colspan="4" col="4">
-                        <group colspan="2" col="2">
+                    <group col="3">
+                        <group>
                             <field name="energy_gain"/>
                             <field name="total_work_cost"/>
                             <field name="total_subsidies"/>
-                        </group>
-                        <group colspan="2" col="2">
                             <field name="financing_rate"/>
-                            <field name="delegataire_id"/>
-                            <field name="procivis_file"/>
+                        </group>
+                        <group>
+                            <separator string="Procivis"/>
+                            <field name="procivis_loan"/>
+                            <field name="procivis_advance_grant"/>
+                        </group>
+                        <group>
+                            <separator string="Délégataire"/>
+                            <field name="delegataire_gbm"/>
+                            <field name="delegataire_pma"/>
+                            <field name="delegataire_department"/>
+                            <field name="delegataire_other"/>
                         </group>
                     </group>
                 </xpath>
