@@ -14,18 +14,18 @@ JALON_TRAVAUX_TERMINES = "Travaux terminés"
 
 class SaleOrder(models.Model):
     _inherit = "sale.order"
-    
+
     # Activer le mécanisme d'archivage d'Odoo
     _order = "date_order desc, name desc, id desc"
 
     devis_tzee_id = fields.Many2one(
-        "sale.order", 
+        "sale.order",
         string="Devis TZEE",
         domain=f"[('sale_order_template_id', '=', {TEMPLATE_TZEE})]",
         help="Devis associé utilisant le modèle TZEE (ID=3)"
     )
     client_tzee_id = fields.Many2one(
-        "sale.order", 
+        "sale.order",
         string="Client TZEE",
         domain=f"[('sale_order_template_id', '=', {TEMPLATE_MAR_CLIENT_TZEE})]",
         help="Client associé utilisant le modèle Client TZEE (ID=2)"
@@ -47,20 +47,23 @@ class SaleOrder(models.Model):
     total_work_cost = fields.Monetary(string="Coût Total des Travaux", currency_field='currency_id')
     total_subsidies = fields.Monetary(string="Somme des Subventions", currency_field='currency_id')
     financing_rate = fields.Float(string="Taux de Financement (%)")
-    delegataire_id = fields.Many2one("res.partner", string="Délégataire")
-    procivis_file = fields.Char(string="Dossier Procivis (URL)")
-    
+    procivis_loan = fields.Boolean(string="Procivis prêt")
+    procivis_advance_grant = fields.Boolean(string="Procivis avance de subvention")
+    delegataire_gbm = fields.Boolean(string="GBM")
+    delegataire_pma = fields.Boolean(string="PMA")
+    delegataire_department = fields.Boolean(string="CD 25")
+    delegataire_other = fields.Boolean(string="Autres")
+
     # Forcer le mode de paiement à 30 jours par défaut
     payment_term_id = fields.Many2one(
         "account.payment.term",
         string="Conditions de paiement",
         default=lambda self: self.env['account.payment.term'].browse(4)
     )
-    
+
     # Champ active pour permettre l'archivage des devis
     active = fields.Boolean(default=True, export_string_translation=False)
 
-    
     # Champ couleur calculé basé sur le modèle de devis
     color = fields.Integer(string="Couleur", compute="_compute_color", store=False)
 
@@ -84,7 +87,7 @@ class SaleOrder(models.Model):
             [], order=order, access_rights_uid=SUPERUSER_ID
         )
         return order_states.browse(stage_ids)
-    
+
     @api.onchange("partner_id")
     def _onchange_partner_id(self):
         if self.partner_id:
@@ -93,61 +96,61 @@ class SaleOrder(models.Model):
     def write(self, vals):
         """Surcharge write pour déclencher set_delivered_line_from_state lors du changement de jalon"""
         result = super().write(vals)
-        
+
         # Si le champ order_state_id a été modifié, déclencher la mise à jour des lignes livrées
         if 'order_state_id' in vals:
             for record in self:
                 if record.order_state_id:
                     # Mémoriser l'état des lignes avant modification
                     lines_before = {line.id: line.qty_delivered for line in record.order_line}
-                    
+
                     # Déclencher la mise à jour des lignes livrées
                     record.set_delivered_line_from_state(record.order_state_id)
-                    
+
                     # Vérifier si des lignes ont été modifiées et générer une facture si nécessaire
                     record._auto_create_invoice_if_delivered(lines_before)
-                    
+
                     # Synchroniser le jalon avec le devis client TZEE archivé (si applicable)
                     record._sync_jalon_with_client_tzee()
-                    
+
                     # Désarchiver le devis client si le jalon est "Travaux terminés"
                     record._handle_client_tzee_unarchive()
-        
+
         return result
-    
+
     def _sync_jalon_with_client_tzee(self):
         """Synchronise le jalon du devis TZEE avec le devis client TZEE archivé"""
         self.ensure_one()
-        
+
         # Si c'est un devis TZEE principal (modèle 3) qui a un client_tzee_id
         if (self.sale_order_template_id and
             self.sale_order_template_id.id == TEMPLATE_TZEE and
             self.client_tzee_id):
-            
+
             # Mettre à jour le jalon du devis client archivé
             self.client_tzee_id.order_state_id = self.order_state_id
-            
+
             _logger.info(
-                "Jalon synchronisé: Devis TZEE %s -> Devis Client %s (%s)", 
-                self.name, 
+                "Jalon synchronisé: Devis TZEE %s -> Devis Client %s (%s)",
+                self.name,
                 self.client_tzee_id.name,
                 self.order_state_id.name if self.order_state_id else 'None'
             )
-    
+
     def _handle_client_tzee_unarchive(self):
         """Désarchive le devis client quand le devis TZEE atteint 'Travaux terminés'"""
         self.ensure_one()
-        
+
         # Vérifier si c'est un devis TZEE principal avec un jalon "Travaux terminés"
         if (self.sale_order_template_id and
             self.sale_order_template_id.id == TEMPLATE_TZEE and
             self.client_tzee_id and
             self.order_state_id and
             self.order_state_id.name == JALON_TRAVAUX_TERMINES):
-            
+
             # Désarchiver le devis client
             self.client_tzee_id.active = True
-            
+
             # Ajouter un message dans le chatter
             self.client_tzee_id.message_post(
                 body=f"🔄 <strong>Devis désarchivé automatiquement</strong><br/>"
@@ -155,9 +158,9 @@ class SaleOrder(models.Model):
                      f"au jalon '<strong>Travaux terminés</strong>'",
                 message_type='comment'
             )
-            
+
             _logger.info(
-                "Devis client %s désarchivé suite à la finalisation du devis TZEE %s", 
+                "Devis client %s désarchivé suite à la finalisation du devis TZEE %s",
                 self.client_tzee_id.name,
                 self.name
             )
@@ -215,30 +218,30 @@ class SaleOrder(models.Model):
         for line in self.order_line:
             old_qty = lines_before.get(line.id, 0)
             new_qty = line.qty_delivered
-            
+
             # Si la ligne était non livrée (0) et est maintenant livrée (> 0)
             if old_qty == 0 and new_qty > 0:
                 lines_modified.append(line)
-        
+
         # Si aucune ligne n'a été modifiée, ne rien faire
         if not lines_modified:
             return
-        
+
         # Vérifier s'il y a des lignes livrées non facturées
         lines_to_invoice = self.order_line.filtered(lambda l: l.qty_delivered > l.qty_invoiced)
-        
+
         if not lines_to_invoice:
             return
-        
+
         try:
             # Utiliser la méthode standard d'Odoo pour créer les factures
             # Cela réutilise toute la logique existante de facturation
             invoice = self._create_invoices()
-            
+
             if invoice:
                 # Préparer la liste des lignes concernées avec formatage HTML
                 lines_list = "<br/>".join([f"• {line.product_id.name}" for line in lines_modified])
-                
+
                 # Ajouter un message dans le chatter pour traçabilité avec lien vers la facture
                 self.message_post(
                     body=f"✅ <strong>Facture générée automatiquement</strong><br/>"
@@ -247,9 +250,9 @@ class SaleOrder(models.Model):
                          f"📦 <strong>Lignes concernées:</strong><br/>{lines_list}",
                     message_type='comment'
                 )
-                
+
                 return invoice
-                
+
         except Exception as e:
             _logger.error(
                 "Erreur lors de la création automatique de facture pour la commande %s: %s",
@@ -261,17 +264,17 @@ class SaleOrder(models.Model):
     def create_tzee_order(self):
         """Créer un devis TZEE lié au devis client actuel"""
         self.ensure_one()
-        
+
         # Vérifier les conditions
         if not self.sale_order_template_id or self.sale_order_template_id.id != TEMPLATE_MAR_CLIENT_TZEE:
             raise UserError(_("Cette action n'est disponible que pour les devis avec le modèle Client TZEE (ID=2)"))
-        
+
         if self.devis_tzee_id:
             raise UserError(_("Un devis TZEE est déjà associé à ce devis. Utilisez le bouton 'Voir devis TZEE' pour y accéder."))
-        
+
         if not self.partner_id:
             raise UserError(_("Veuillez d'abord sélectionner un client avant de créer un devis TZEE"))
-        
+
         # Récupérer le modèle TZEE (ID=3)
         tzee_template = self.env['sale.order.template'].browse(TEMPLATE_TZEE)
         if not tzee_template.exists():
@@ -290,12 +293,10 @@ class SaleOrder(models.Model):
             'total_work_cost': self.total_work_cost,
             'total_subsidies': self.total_subsidies,
             'financing_rate': self.financing_rate,
-            'delegataire_id': self.delegataire_id.id if self.delegataire_id else False,
-            'procivis_file': self.procivis_file,
             'order_state_id': self.order_state_id.id if self.order_state_id else False,
             'order_line': [],  # Initialiser la liste des lignes
         }
-        
+
         # Ajouter une ligne de note en première position si client_tzee_id est défini
         if self.partner_id:
             client_name = self.partner_id.name
@@ -305,7 +306,7 @@ class SaleOrder(models.Model):
                 'sequence': 1,  # Première ligne
             })
             tzee_order_vals['order_line'].append(note_line)
-        
+
         # Ajouter explicitement les lignes du modèle TZEE (même logique que dans sale_order_import.py)
         sequence = 10  # Commencer à 10 pour les lignes normales
         for line in tzee_template.sale_order_template_line_ids:
@@ -317,33 +318,33 @@ class SaleOrder(models.Model):
                 'sequence': sequence,
             }))
             sequence += 1
-        
+
         _logger.info("Creating TZEE order with values: %s", tzee_order_vals)
-        
+
         # Créer le devis avec toutes les valeurs (y compris les lignes du modèle)
         tzee_order = self.create(tzee_order_vals)
-        
+
         # Lier le devis TZEE au devis client
         self.devis_tzee_id = tzee_order.id
-        
+
         # Archiver le devis client TZEE (modèle 2) car on va gérer uniquement le devis TZEE principal
         self.active = False
-        
+
         # Ajouter un message dans le chatter du nouveau devis TZEE
         tzee_order.message_post(
             body=f"Devis TZEE généré automatiquement depuis le devis client <a href='/web#id={self.id}&view_type=form&model=sale.order'>{self.name}</a>",
             message_type='comment'
         )
-        
+
         # Ajouter un message dans le chatter du devis client
         self.message_post(
             body=f"Devis TZEE <a href='/web#id={tzee_order.id}&view_type=form&model=sale.order'>{tzee_order.name}</a> créé automatiquement",
             message_type='comment'
         )
-        
+
         # Notifier l'utilisateur du succès
         message = _("Devis TZEE créé avec succès ! Vous allez être redirigé vers le nouveau devis.")
-        
+
         # Retourner une action pour ouvrir le nouveau devis
         return {
             'type': 'ir.actions.act_window',
@@ -356,13 +357,13 @@ class SaleOrder(models.Model):
                 'default_message': message,
             }
         }
-    
+
     def action_view_tzee_order(self):
         """Action pour ouvrir le devis TZEE associé"""
         self.ensure_one()
         if not self.devis_tzee_id:
             raise UserError(_("Aucun devis TZEE n'est associé à ce devis"))
-        
+
         return {
             'type': 'ir.actions.act_window',
             'name': 'Devis TZEE associé',
@@ -376,7 +377,7 @@ class SaleOrder(models.Model):
         """Basculer l'état actif/archivé du devis"""
         for record in self:
             record.active = not record.active
-            
+
             # Ajouter un message dans le chatter
             action = "archivé" if not record.active else "désarchivé"
             record.message_post(
