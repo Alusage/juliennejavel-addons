@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="module_category_juliennejavel" model="ir.module.category">
+        <field name="name">Julienne Javel</field>
+        <field name="sequence">50</field>
+    </record>
+
+    <record id="group_contact_and_product_creator" model="res.groups">
+        <field name="name">Création de contacts et produits depuis devis/factures</field>
+        <field name="category_id" ref="module_category_juliennejavel"/>
+        <field name="comment">Les utilisateurs hors de ce groupe ne peuvent pas créer de contact ni de produit depuis les formulaires de devis/commande et de facture.</field>
+    </record>
+</odoo>
